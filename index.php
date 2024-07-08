@@ -1,4 +1,7 @@
 <?php
+
+session_start();
+
 include_once "./inc/db.inc.php";
 include_once "./inc/function.inc.php";
 
@@ -36,25 +39,48 @@ $e = sanitizeData($e);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Blog</title>
     <link rel="stylesheet" href="/Simple_Blog/css/default.css">
+    <link rel="alternate" type="application/rss+xml" title="My Simple Blog -RSS 2.0" href="/Simple_Blog/feeds/rss.php" />
 </head>
 
 <body>
     <h1>Simple Blog Application</h1>
 
     <ul id="menu">
-        <li><a href="/simple_blog/blog/">Blog</a></li>
-        <li><a href="/simple_blog/about/">About the Author</a></li>
+        <li><a href="/Simple_Blog/blog/">Blog</a></li>
+        <li><a href="/Simple_Blog/about/">About the Author</a></li>
     </ul>
+    <?php if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] == 1) : ?>
+        <p id="control_panel">
+            You are Logged in!
+            <a href="/Simple_Blog/inc/update.inc.php?action=logout">Log Out</a>
+        </p>
+    <?php endif; ?>
     <div id="entries">
         <?php
         if ($fulldisp == 1) {
             $url = (isset($url)) ? $url : $e['url'];
-
+            if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] == 1) {
+                // build the adminlinks
+                $admin = adminLinks($page, $url);
+            } else {
+                $admin = array('edit' => NULL, 'delete' => NULL);
+            }
             // build the admin Links
             $admin = adminLinks($page, $url);
 
             // Format the image if one exits
             $img = formatImage($e['image'], $e['title']);
+
+            if ($page === 'blog') {
+                // load the comment object
+                include_once "inc/comments.inc.php";
+                $comments = new Comments();
+                $comment_disp = $comments->showComments(($e['id']));
+                $comment_form = $comments->showCommentForm($e['id']);
+            } else {
+                $comment_form = NULL;
+                
+            }
         ?>
             <h2><?php echo $e['title'] ?></h2>
             <?php if (isset($img)) { ?>
@@ -70,6 +96,9 @@ $e = sanitizeData($e);
                 <p class="backlink">
                     <a href="../">Back to Last Entry</a>
                 </p>
+                <h3>Comments for This Entry</h3>
+                <?php echo $comment_disp, $comment_form; ?>
+
             <?php } ?>
             <?php } else {
             foreach ($e as $entry) { ?>
@@ -78,10 +107,20 @@ $e = sanitizeData($e);
                         <?php echo $entry['title'] ?></a>
                 </p>
         <?php }
-        } ?>
-
-        <p class="backlink">
-            <a href="/Simple_Blog/admin/<?php echo $page ?>">Post A new Entry</a>
+        }
+        ?>
+        <?php if ($page == 'blog' && isset($_SESSION['loggedin']) && $_SESSION['loggedin'] == 1) :  ?>
+            <p class="backlink">
+                <?php if ($page == 'blog') ?>
+                <a href="/Simple_Blog/admin/<?php echo $page ?>">Post A new Entry</a>
+            </p>
+        <?php else : ?>
+            <p class="backlink">
+                <a href="/Simple_Blog/admin/<?php echo $page ?>">Create a New Adminstrator</a>
+            </p>
+        <?php endif; ?>
+        <p>
+            <a href="/Simple_Blog/feeds/rss.php">Subscribe Via RSS!</a>
         </p>
     </div>
 </body>

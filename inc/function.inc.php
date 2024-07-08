@@ -3,7 +3,7 @@ function retrivesEntries($db, $page, $url = Null)
 {
 
     if (isset($url)) {
-        $sql = "SELECT id, page, title,image, entry
+        $sql = "SELECT id, page, title,image, entry,created
     FROM entries
     WHERE url=?
     LIMIT 1";
@@ -15,7 +15,7 @@ function retrivesEntries($db, $page, $url = Null)
         $fulldisp = 1;
     } else {
         // if no entry id get all entry title 
-        $sql = "SELECT id,page,title,image,entry,url FROM entries WHERE page=? ORDER BY created DESC";
+        $sql = "SELECT id,page,title,image,entry,url,created FROM entries WHERE page=? ORDER BY created DESC";
         $stmt = $db->prepare($sql);
         $stmt->execute([$page]);
 
@@ -115,4 +115,24 @@ function formatImage($img = NULL, $alt = NULL)
     } else {
         return NULL;
     }
+}
+
+function createUserForm()
+{
+    return <<<FORM
+        <form action="/Simple_Blog/inc/update.inc.php" method="POST">
+            <fieldset>
+            <legend>Create a New Adminstrator</legend>
+            <label for="">Username
+                <input type="text" name="username" maxlength="75">
+            </label>
+            <label for="">Password
+                <input type="password" name="password">
+            </label>
+            <input type="submit" name="submit" value="Create">
+            <input type="submit" name="submit" value="Cancel">
+            <input type="hidden" name="action" value="createuser">
+            </fieldset>
+    </form>
+FORM;
 }
